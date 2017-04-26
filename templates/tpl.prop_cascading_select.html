@@ -1,0 +1,86 @@
+<div class="form-inline">
+    <!-- BEGIN level_select -->
+    <select class="form-control" id="{ID}" name="{UNIQUE_ID_SEL}"  {DISABLED}>
+	<!-- BEGIN level_options -->
+	<option value="{VAL_LEVEL_OPTION}" {CHK_LEVEL_OPTION}>{TXT_LEVEL_OPTION}</option>
+	<!-- END level_options -->
+    </select>
+    <!-- END level_select -->
+	<input type="hidden" id="{POST_VAR}_hidden" name="{POST_VAR}" value="{VALUE}" />
+</div>
+
+<script type="text/javascript">
+    
+$(document).ready(function () {
+
+	var pathSeparator = " → ";	
+	var optionsDefJson = '{JSON_DEF}';
+	var selectText = "{TXT_SEL}";
+	var levels = {NUM_LEVELS};
+	var id = "{POST_VAR}";
+	
+	var optionsDef = $.parseJSON(optionsDefJson);
+	
+	
+	function setOptionsForSelection(input, subOptions, level) {
+	
+		var currentElement = input.shift();
+		
+		if(currentElement !== undefined) {
+			currentElement = currentElement.trim();
+		}
+
+		$.each(subOptions.options, function (i, option) {
+			
+			var selectOption = new Option(option.name,option.name);
+			$('#' + id + '_' + level).append(selectOption);
+			if(currentElement === option.name.trim()) {
+				selectOption.selected = true;
+				setOptionsForSelection(input, option, level + 1);
+			}
+			
+		});
+	}
+	
+	function loadOptionsFromHiddenValue() {
+		
+		var value = $('#' + id + '_hidden').val();
+		var optionsPerLevel = value.split(pathSeparator);
+		setOptionsForSelection(optionsPerLevel, optionsDef, 0);
+	}
+	
+	function writeOptionsToHiddenValue() {
+		
+		var hidden = [];
+		for(i=0;i<levels;i++) {
+			selectedText = $('#' + id + '_' + i + ' :selected').text();
+			if(selectedText.length > 0) {
+				hidden[i] = selectedText; 
+			}
+		}
+		$("#" + id + '_hidden').val(hidden.join(" " + pathSeparator + " "));
+	}
+	
+	loadOptionsFromHiddenValue();
+	
+	for(i = 0; i < levels; i++) {
+		(function(i) {
+			$('#'+id+'_'+i).change(function() 
+			{
+				for(j = i+1; j < levels; j++) {
+					$('#' + id + '_' + j).children().remove();
+				}
+				writeOptionsToHiddenValue();
+
+				for(i = 0; i < levels; i++) {
+					$('#' + id + '_' + i).children().remove();
+					selectOption = new Option(selectText,'');
+					$('#' + id + '_' + i).append(selectOption)
+				}
+				loadOptionsFromHiddenValue();
+			});
+		})(i);
+	}
+});
+
+</script>
