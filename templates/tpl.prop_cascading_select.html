@@ -55,10 +55,10 @@ $(document).ready(function () {
 		for(i=0;i<levels;i++) {
 			selectedText = $('#' + id + '_' + i + ' :selected').text();
 			if(selectedText.length > 0) {
-				hidden[i] = selectedText; 
+				hidden[i] = selectedText.trim(); 
 			}
 		}
-		$("#" + id + '_hidden').val(hidden.join(" " + pathSeparator + " "));
+		$("#" + id + '_hidden').val(hidden.join(pathSeparator));
 	}
 	
 	loadOptionsFromHiddenValue();
