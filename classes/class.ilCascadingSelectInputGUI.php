@@ -59,7 +59,6 @@ class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
 	 */
 	public function setValue($a_value)
 	{
-		ilLoggerFactory::getLogger('udfd')->info('New value is: ' . $a_value);
 		$this->value = $a_value;
 	}
 
@@ -144,7 +143,6 @@ class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
 		$template = $this->cascading_plugin->getTemplate('tpl.prop_cascading_select.html', true, true);
 		
 		$num_levels = $this->parseLevels($this->getCascadingOptions());
-		ilLoggerFactory::getLogger('udfd')->info('Found '.$num_levels.' levels');
 		
 		$template->setVariable('NUM_LEVELS', $num_levels);
 		$template->setVariable('UNIQUE_ID_SEL', 'udf_'.$this->getFieldId().'_select');

@@ -139,9 +139,7 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 		}
 		
 		$xml = simplexml_load_string($xml_string);
-		
 		$template = $this->getTemplate('tpl.options_info.html', true, true);
-		
 		
 		
 		$custom = new ilCustomInputGUI();
@@ -162,11 +160,17 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 			ilLoggerFactory::getLogger('udfd')->dump($xml);
 			$settings->set('xml_'.$a_field_id, $xml);
 
-			// create json from xml
 			$xml_obj = simplexml_load_string($xml);
-			$json = $this->transformXml($xml_obj);
+
+			// create json from xml
+			$json = $this->transformXml($xml_obj,true);
 			$settings->set('json_'.$a_field_id, $json);
 			ilLoggerFactory::getLogger('udfd')->dump($json);
+			
+			// parse deprecated list
+			$json_new = $this->transformXml($xml_obj,false);
+			$settings->set('json_deprecated_'.$a_field_id, $json_new);
+			ilLoggerFactory::getLogger('udfd')->dump($json_new);
 		}
 	}
 	
@@ -183,25 +187,109 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 		);
 		
 		$settings = new ilSetting('udfd');
-			
-		$json_string = $settings->get('json_'.$definition['field_id']);
-		$options = json_decode($json_string);
-		$cascading_select->setCascadingOptions($options);
-		$cascading_select->setValue($a_default_value);
+
+		// check if values are available for field
+		$usr_id = $GLOBALS['DIC']->user()->getId();
+		$value = $a_default_value;
+		if($usr_id)
+		{
+			include_once './Services/User/classes/class.ilUserDefinedData.php';
+			$udf_data = ilUserDefinedData::lookupData([$usr_id], [$definition['field_id']]);
+			if(is_array($udf_data[$usr_id]) && array_key_exists($definition['field_id'], $udf_data[$usr_id]))
+			{
+				$value = $udf_data[$usr_id][$definition['field_id']];
+			}
+		}
+		
+		$json_obj = $this->addValueToJsonIfDeprecated(
+			$value,
+			json_decode($settings->get('json_'.$definition['field_id'])),
+			json_decode($settings->get('json_deprecated_'.$definition['field_id']))
+		);
+		
+		$cascading_select->setCascadingOptions($json_obj);
+		$cascading_select->setValue($value);
 		$cascading_select->setRequired($definition['required'] ? true : false);
 		
 		return $cascading_select;
 	}
 	
 	/**
+	 * Add value to json if deprecated
+	 * @param string $value
+	 * @param type $json_clean
+	 * @param type $json_deprecated
+	 * @return type
+	 */
+	protected function addValueToJsonIfDeprecated($value, $json_clean, $json_deprecated)
+	{
+		$single_values = explode(" → ", $value);
+		if(!count($single_values))
+		{
+			return $json_clean;
+		}
+		
+		$json_clean->options = $this->addValueToJsonIfDeprecatedForOptions(
+			$single_values, 
+			(array) $json_clean->options, 
+			(array) $json_deprecated->options);
+		return $json_clean;
+	}	
+	
+	/**
+	 * 
+	 * @param type $values
+	 * @param array $options_clean
+	 * @param array $options_deprecated
+	 */
+	protected function addValueToJsonIfDeprecatedForOptions($values, array $options_clean, array $options_deprecated)
+	{
+		$current_value = array_shift($values);
+		
+		foreach($options_deprecated as $option)
+		{
+			ilLoggerFactory::getLogger('udfd')->debug('Comparing ' . $current_value.' with: ' . $option->name);
+			if($option->name == $current_value)
+			{
+				ilLoggerFactory::getLogger('udfd')->debug('Options are equal');
+				// add 
+				$found = null;
+				foreach($options_clean as $cleaned_option)
+				{
+					if($cleaned_option->name == $current_value)
+					{
+						ilLoggerFactory::getLogger('udfd')->debug('Found option: ' . $cleaned_option->name);
+						$found = $cleaned_option;
+						break;
+					}
+				}
+				if(!is_object($found))
+				{
+					$found = new stdClass();
+					$found->name = $current_value;
+					$found->options = array();
+					$options_clean[] = $found;
+				}
+				// call subnode
+				$found->options = $this->addValueToJsonIfDeprecatedForOptions(
+					$values, 
+					(array) $found->options, 
+					(array) $option->options);
+			}
+		}
+		return $options_clean;
+	}
+
+
+	/**
 	 * Parse xml to json
 	 * @return string json
 	 */
-	protected function transformXml(SimpleXMLElement $root)
+	protected function transformXml(SimpleXMLElement $root, $a_filter_deprecated = true)
 	{
 		$node = new stdClass();
 		
-		$ret = $this->addOptions($root);
+		$ret = $this->addOptions($root,$a_filter_deprecated);
 		if(is_array($ret))
 		{
 			$node->options = $ret;
@@ -216,16 +304,28 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 	 * @param SimpleXMLElement $element
 	 * @return \stdClass
 	 */
-	protected function addOptions(SimpleXMLElement $element)
+	protected function addOptions(SimpleXMLElement $element,$a_filter_deprecated = true, $a_is_deprecated = false)
 	{
 		$options = array();
 		
 		foreach($element->children() as $select_option)
 		{
+			if($a_filter_deprecated && $select_option['deprecated'] == 1)
+			{
+				continue;
+			}
+			
 			$option = new stdClass();
 			$option->name = (string) $select_option['name'];
 
-			$ret = $this->addOptions($select_option);
+			$is_deprecated = 0;
+			if($a_is_deprecated || (string) $select_option['deprecated'])
+			{
+				$is_deprecated = 1;
+			}
+			$option->deprecated = $is_deprecated;
+
+			$ret = $this->addOptions($select_option, $a_filter_deprecated, $is_deprecated);
 			if(count($ret))
 			{
 				$option->options = $ret;
