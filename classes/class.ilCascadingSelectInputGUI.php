@@ -18,6 +18,8 @@ class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
 	 */
 	private $cascading_plugin;
 	
+	private $column_definition = array();
+	
 	/**
 	 * Constructor
 	 *
@@ -50,6 +52,20 @@ class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
 	public function getOptions()
 	{
 		return $this->options ? $this->options : array();
+	}
+	
+	public function setColumnDefinition($a_coldef)
+	{
+		$this->column_definition = $a_coldef;
+	}
+	
+	/**
+	 * Get column definition
+	 * @return array 
+	 */
+	public function getColumnDefinition()
+	{
+		return $this->column_definition;
 	}
 	
 	/**
@@ -149,6 +165,17 @@ class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
 		$template->setVariable('JSON_DEF', json_encode($this->getCascadingOptions()));
 		$template->setVariable('TXT_SEL', $GLOBALS['lng']->txt('links_select_one'));
 		$template->setVariable('VALUE',$this->getValue());
+		
+		// colomn titles
+		if(count($this->getColumnDefinition()))
+		{
+			foreach($this->getColumnDefinition() as $name)
+			{
+				$template->setCurrentBlock('level_text');
+				$template->setVariable('TXT_COL',$name);
+				$template->parseCurrentBlock();
+			}
+		}
 
 		for($i = 0; $i < $num_levels; $i++)
 		{

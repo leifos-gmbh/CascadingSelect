@@ -1,11 +1,24 @@
 <div class="form-inline">
-    <!-- BEGIN level_select -->
-    <select class="form-control" id="{ID}" name="{UNIQUE_ID_SEL}"  {DISABLED}>
-	<!-- BEGIN level_options -->
-	<option value="{VAL_LEVEL_OPTION}" {CHK_LEVEL_OPTION}>{TXT_LEVEL_OPTION}</option>
-	<!-- END level_options -->
-    </select>
-    <!-- END level_select -->
+	<table class="tbltitle">
+		<tr class="std">
+		<!-- BEGIN level_text -->
+			<td class="std">
+				{TXT_COL}
+			</td>
+		<!-- END level_text -->
+		</tr>
+		<tr>
+			<!-- BEGIN level_select -->
+			<td class="std">
+				<select class="form-control" id="{ID}" name="{UNIQUE_ID_SEL}"  {DISABLED}>
+				<!-- BEGIN level_options -->
+				<option value="{VAL_LEVEL_OPTION}" {CHK_LEVEL_OPTION}>{TXT_LEVEL_OPTION}</option>
+				<!-- END level_options -->
+				</select>
+			</td>
+			<!-- END level_select -->
+		</tr>
+	</table>
 	<input type="hidden" id="{POST_VAR}_hidden" name="{POST_VAR}" value="{VALUE}" />
 </div>
 

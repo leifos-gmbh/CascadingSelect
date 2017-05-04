@@ -171,6 +171,11 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 			$json_new = $this->transformXml($xml_obj,false);
 			$settings->set('json_deprecated_'.$a_field_id, $json_new);
 			ilLoggerFactory::getLogger('udfd')->dump($json_new);
+			
+			// parse colspec
+			$colspec = $this->transformXmlColSpec($xml_obj);
+			$settings->set('colspec_'.$a_field_id,  serialize($colspec));
+			ilLoggerFactory::getLogger('udfd')->dump($colspec);
 		}
 	}
 	
@@ -208,6 +213,9 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 		);
 		
 		$cascading_select->setCascadingOptions($json_obj);
+		
+		$coldef = $settings->get('colspec_'.$definition['field_id'],  serialize(array()));
+		$cascading_select->setColumnDefinition(unserialize($coldef));
 		$cascading_select->setValue($value);
 		$cascading_select->setRequired($definition['required'] ? true : false);
 		
@@ -279,6 +287,27 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 		}
 		return $options_clean;
 	}
+	
+	/**
+	 * Parse column specification
+	 * @param SimpleXMLElement $root
+	 */
+	protected function transformXmlColSpec(SimpleXMLElement $root)
+	{
+		$columns = [];
+		foreach($root->children() as $child)
+		{
+			if($child->getName() != 'colspec')
+			{
+				continue;
+			}
+			foreach($child->children() as $column)
+			{
+				$columns[] = (string) $column['name'];
+			}
+		}
+		return $columns;
+	}
 
 
 	/**
@@ -310,6 +339,10 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 		
 		foreach($element->children() as $select_option)
 		{
+			if($select_option->getName() != 'option')
+			{
+				continue;
+			}
 			if($a_filter_deprecated && $select_option['deprecated'] == 1)
 			{
 				continue;
