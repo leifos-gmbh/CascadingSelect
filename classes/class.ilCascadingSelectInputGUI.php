@@ -11,6 +11,8 @@ include_once './Services/Form/classes/class.ilSubEnabledFormPropertyGUI.php';
  */
 class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
 {
+	const SEPERATOR = ' → ';
+	
 	private $cascading_values = null;
 	
 	/**
@@ -123,18 +125,39 @@ class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
 		
 		$valid = true;
 		$_POST[$this->getPostVar()] = ilUtil::stripSlashes($_POST[$this->getPostVar()]);
+
+		// validate options against options
+		$values = explode(self::SEPERATOR, $_POST[$this->getPostVar()]);
 		
-		if($this->getRequired() && trim($_POST[$this->getPostVar()]) == "")
+		$options = $this->getCascadingOptions();
+		$options = $options->options;
+
+		$confirmed_values = [];
+		foreach($values as $value)
 		{
-			$valid = false;
+			foreach((array) $options as $option)
+			{
+				if($option->name == trim($value))
+				{
+					$confirmed_values[] = trim($value);
+					$options = $option->options;
+					break;
+				}
+			}
 		}
-		if (!$valid)
+		
+		$levels = $this->parseLevels($this->getCascadingOptions());
+		if(
+			$this->getRequired() &&
+			(count($confirmed_values) < $levels)
+		) 
 		{
 			$this->setAlert($lng->txt("msg_input_is_required"));
 			return false;
 		}
-		return $this->checkSubItemsInput();
 		
+		$_POST[$this->getPostVar()] = implode(self::SEPERATOR, $confirmed_values);
+		return $this->checkSubItemsInput();
 	}
 	
 	/**
