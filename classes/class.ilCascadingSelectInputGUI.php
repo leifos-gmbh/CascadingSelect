@@ -207,6 +207,10 @@ class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
 			$template->setVariable('VAL_LEVEL_OPTION', '');
 			
 			$template->setCurrentBlock('level_select');
+			if($this->getDisabled())
+			{
+				$template->setVariable('DISABLED', 'disabled="disabled"');
+			}
 			$template->setVariable('ID', $this->getFieldId().'_'.$i);
 			$template->setVariable('POST_VAR', $this->getPostVar());
 			$template->parseCurrentBlock();

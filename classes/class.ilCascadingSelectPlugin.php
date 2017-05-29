@@ -184,12 +184,13 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 	 * Context: edit user; registration; edit user profile 
 	 * @return ilFormPropertyGUI
 	 */
-	public function getFormPropertyForDefinition($definition, $a_default_value = null)
+	public function getFormPropertyForDefinition($definition, $a_changeable = true, $a_default_value = null)
 	{
 		$cascading_select = new ilCascadingSelectInputGUI(
 			$definition['field_name'],
 			'udf_'.$definition['field_id']
 		);
+		$cascading_select->setDisabled(!$a_changeable);
 		
 		$settings = new ilSetting('udfd');
 
