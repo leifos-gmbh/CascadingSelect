@@ -157,7 +157,24 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 		if($_FILES['cspl_file']['tmp_name'])
 		{
 			$xml = file_get_contents($_FILES['cspl_file']['tmp_name']);
-			ilLoggerFactory::getLogger('udfd')->dump($xml);
+			$dtd = $this->getDirectory().'/xml/cascading_select.xsd';
+			
+			libxml_use_internal_errors(true);
+			$dom = new DOMDocument();
+			$dom->loadXML($xml);
+			if(!$dom->schemaValidate($dtd))
+			{
+				ilLoggerFactory::getLogger('udfd')->notice($xml);
+				$errors = [];
+				foreach(libxml_get_errors() as $error)
+				{
+					ilLoggerFactory::getLogger('udfd')->warning($error->message);
+					$errors[] = $error->message;
+				}
+				ilUtil::sendFailure(implode('<br/>', $errors),true);
+				return false;
+			}
+			
 			$settings->set('xml_'.$a_field_id, $xml);
 
 			$xml_obj = simplexml_load_string($xml);

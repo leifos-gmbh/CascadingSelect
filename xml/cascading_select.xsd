@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<!--
+Copyright (c) 1998-2010 ILIAS open source, Extended GPL, see docs/LICENSE
+-->
+<xs:schema version="1.0"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified">
+    
+    <xs:attribute name="name" type="xs:string"/>
+    <xs:attribute name="deprecated" type="xs:string"/>
+    
+    <xs:element name="column">
+        <xs:complexType>
+            <xs:attribute ref="name" />
+        </xs:complexType>
+    </xs:element>
+    
+    <xs:element name="colspec">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="column" minOccurs="0" maxOccurs="unbounded" /> 
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>                                        
+    
+    <xs:element name="option">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="option" minOccurs="0" maxOccurs="unbounded" />
+            </xs:sequence>
+            <xs:attribute ref="name" />
+        </xs:complexType>
+    </xs:element>
+    
+    <xs:element name="options">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="colspec" minOccurs="1" maxOccurs="1" />
+                <xs:element ref="option" minOccurs="1" maxOccurs="unbounded" />
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    
+</xs:schema>
