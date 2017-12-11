@@ -130,7 +130,7 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 			return;
 		}
 		
-		$settings = new ilSetting('udfd');
+		$settings = ilCascadingSelectSettings::getInstance();
 		$xml_string = $settings->get('xml_'.$field_id);
 		if(!strlen($xml_string))
 		{
@@ -152,7 +152,7 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 	 */
 	public function updateDefinitionFromForm(ilPropertyFormGUI $form, $a_field_id = 0)
 	{
-		$settings = new ilSetting('udfd');
+		$settings = ilCascadingSelectSettings::getInstance();
 		
 		if($_FILES['cspl_file']['tmp_name'])
 		{
@@ -209,7 +209,7 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 		);
 		$cascading_select->setDisabled(!$a_changeable);
 		
-		$settings = new ilSetting('udfd');
+		$settings = ilCascadingSelectSettings::getInstance();
 
 		// check if values are available for field
 		$usr_id = $GLOBALS['DIC']->user()->getId();
