@@ -7,8 +7,14 @@ Copyright (c) 1998-2010 ILIAS open source, Extended GPL, see docs/LICENSE
            elementFormDefault="qualified">
     
     <xs:attribute name="name" type="xs:string"/>
-    <xs:attribute name="deprecated" type="xs:string"/>
-    
+    <xs:attribute name="deprecated">
+        <xs:simpleType>
+            <xs:restriction base="xs:string">
+                <xs:pattern value="[01]"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="deprecatedSince" type="xs:date"/>
     <xs:element name="column">
         <xs:complexType>
             <xs:attribute ref="name" />
@@ -29,9 +35,10 @@ Copyright (c) 1998-2010 ILIAS open source, Extended GPL, see docs/LICENSE
                 <xs:element ref="option" minOccurs="0" maxOccurs="unbounded" />
             </xs:sequence>
             <xs:attribute ref="name" />
+            <xs:attribute ref="deprecated" /> 
+            <xs:attribute ref="deprecatedSince" /> 
         </xs:complexType>
     </xs:element>
-    
     <xs:element name="options">
         <xs:complexType>
             <xs:sequence>
