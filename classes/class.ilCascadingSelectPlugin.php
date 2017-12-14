@@ -224,9 +224,15 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 			}
 		}
 		
+		$today = new ilDate(time(),IL_CAL_UNIX);
+		$with_deprecated = json_decode($settings->get('json_'.$definition['field_id']));
+		$without_deprecated_options = $this->removeDeprecatedSince((array) $with_deprecated->options, $today);
+		$without_deprecated = new stdClass();
+		$without_deprecated->options = $without_deprecated_options;
+		
 		$json_obj = $this->addValueToJsonIfDeprecated(
 			$value,
-			json_decode($settings->get('json_'.$definition['field_id'])),
+			$without_deprecated,
 			json_decode($settings->get('json_deprecated_'.$definition['field_id']))
 		);
 		
@@ -238,6 +244,41 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 		$cascading_select->setRequired($definition['required'] ? true : false);
 		
 		return $cascading_select;
+	}
+	
+	/**
+	 * Remove deprecated since
+	 * @param array $a_with_deprecated
+	 * @return array
+	 */
+	protected function removeDeprecatedSince($a_with_deprecated, ilDate $today)
+	{
+		$options = [];
+		
+		foreach((array) $a_with_deprecated as $idx => $option)
+		{
+			if(strlen($option->deprecatedSince))
+			{
+				$deprecated_date = new ilDate($option->deprecatedSince, IL_CAL_DATE);
+				if(
+					ilDateTime::_after($today, $deprecated_date, IL_CAL_DAY) ||
+					ilDateTime::_equals($today, $deprecated_date, IL_CAL_DAY)
+				)
+				{
+					continue;
+				}
+			}
+			$option_without_deprecated = new stdClass();
+			$option_without_deprecated->name = $option->name;
+			
+			if(count((array) $option->options))
+			{
+				$option_without_deprecated->options = $this->removeDeprecatedSince($option->options, $today);
+			}
+			
+			$options[] = $option_without_deprecated;
+		}
+		return $options;
 	}
 	
 	/**
@@ -374,6 +415,15 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 			{
 				$is_deprecated = 1;
 			}
+			if(!$is_deprecated)
+			{
+				if(strlen((string) $select_option['deprecatedSince']))
+				{
+					$option->deprecatedSince = (string) $select_option['deprecatedSince'];
+				}
+			}
+			
+			
 			$option->deprecated = $is_deprecated;
 
 			$ret = $this->addOptions($select_option, $a_filter_deprecated, $is_deprecated);

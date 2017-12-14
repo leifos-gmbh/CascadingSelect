@@ -14,7 +14,13 @@ Copyright (c) 1998-2010 ILIAS open source, Extended GPL, see docs/LICENSE
             </xs:restriction>
         </xs:simpleType>
     </xs:attribute>
-    <xs:attribute name="deprecatedSince" type="xs:date"/>
+    <xs:attribute name="deprecatedSince" >
+        <xs:simpleType>
+            <xs:restriction base="xs:string">
+                <xs:pattern value="[0-9]{4}-[0-9]{2}-[0-9]{2}"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:attribute>
     <xs:element name="column">
         <xs:complexType>
             <xs:attribute ref="name" />
