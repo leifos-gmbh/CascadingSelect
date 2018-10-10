@@ -6,7 +6,7 @@ This ILIAS plugin provides a custom user data field that provides the possibilit
 5.3.0
 
 **Maximum ILIAS Version:**
-5.3.999
+5.4.999
 
 **Responsible Developer:**
 Stefan Meyer <meyer at leifos dot com>
