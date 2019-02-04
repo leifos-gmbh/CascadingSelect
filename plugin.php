@@ -1,8 +1,10 @@
 <?php
 // alphanumerical ID of the plugin; never change this
 $id = 'udfcs';
+
 // code version; must be changed for all code changes
-$version = '5.3.0';
+$version = '5.3.11';
+
 // ilias min and max version; must always reflect the versions that should
 // run with the plugin
 $ilias_min_version = "5.3.0";

@@ -126,7 +126,7 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 		
 		if(!$field_id)
 		{
-			ilLoggerFactory::getLogger('udfd')->debug('No field id given');
+			ilLoggerFactory::getLogger('udfcs')->debug('No field id given');
 			return;
 		}
 		
@@ -134,7 +134,7 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 		$xml_string = $settings->get('xml_'.$field_id);
 		if(!strlen($xml_string))
 		{
-			ilLoggerFactory::getLogger('udfd')->debug('No xml string found for id ' . $field_id);
+			ilLoggerFactory::getLogger('udfcs')->debug('No xml string found for id ' . $field_id);
 			return true;
 		}
 		
@@ -164,11 +164,11 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 			$dom->loadXML($xml);
 			if(!$dom->schemaValidate($dtd))
 			{
-				ilLoggerFactory::getLogger('udfd')->notice($xml);
+				ilLoggerFactory::getLogger('udfcs')->notice($xml);
 				$errors = [];
 				foreach(libxml_get_errors() as $error)
 				{
-					ilLoggerFactory::getLogger('udfd')->warning($error->message);
+					ilLoggerFactory::getLogger('udfcs')->warning($error->message);
 					$errors[] = $error->message;
 				}
 				ilUtil::sendFailure(implode('<br/>', $errors),true);
@@ -182,17 +182,17 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 			// create json from xml
 			$json = $this->transformXml($xml_obj,true);
 			$settings->set('json_'.$a_field_id, $json);
-			ilLoggerFactory::getLogger('udfd')->dump($json);
+			ilLoggerFactory::getLogger('udfcs')->dump($json);
 			
 			// parse deprecated list
 			$json_new = $this->transformXml($xml_obj,false);
 			$settings->set('json_deprecated_'.$a_field_id, $json_new);
-			ilLoggerFactory::getLogger('udfd')->dump($json_new);
+			ilLoggerFactory::getLogger('udfcs')->dump($json_new);
 			
 			// parse colspec
 			$colspec = $this->transformXmlColSpec($xml_obj);
 			$settings->set('colspec_'.$a_field_id,  serialize($colspec));
-			ilLoggerFactory::getLogger('udfd')->dump($colspec);
+			ilLoggerFactory::getLogger('udfcs')->dump($colspec);
 		}
 	}
 	
@@ -315,17 +315,17 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 		
 		foreach($options_deprecated as $option)
 		{
-			ilLoggerFactory::getLogger('udfd')->debug('Comparing ' . $current_value.' with: ' . $option->name);
+			ilLoggerFactory::getLogger('udfcs')->debug('Comparing ' . $current_value.' with: ' . $option->name);
 			if($option->name == $current_value)
 			{
-				ilLoggerFactory::getLogger('udfd')->debug('Options are equal');
+				ilLoggerFactory::getLogger('udfcs')->debug('Options are equal');
 				// add 
 				$found = null;
 				foreach($options_clean as $cleaned_option)
 				{
 					if($cleaned_option->name == $current_value)
 					{
-						ilLoggerFactory::getLogger('udfd')->debug('Found option: ' . $cleaned_option->name);
+						ilLoggerFactory::getLogger('udfcs')->debug('Found option: ' . $cleaned_option->name);
 						$found = $cleaned_option;
 						break;
 					}
@@ -382,7 +382,7 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 		{
 			$node->options = $ret;
 		}
-		ilLoggerFactory::getLogger('udfd')->dump($node);
+		ilLoggerFactory::getLogger('udfcs')->dump($node);
 		
 		return json_encode($node);
 	}

@@ -23,7 +23,7 @@ if(!$ilDB->tableExists('udf_plugin_cselect'))
 <#2>
 <?php
 
-$query  = 'select * from settings where module = '. $ilDB->quote('udfd');
+$query  = 'select * from settings where module = '. $ilDB->quote('udfcs');
 $res = $ilDB->query($query);
 while($row = $res->fetchRow(ilDBConstants::FETCHMODE_OBJECT))
 {
