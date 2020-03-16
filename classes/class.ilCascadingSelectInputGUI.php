@@ -13,7 +13,7 @@ class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
 {
 	const SEPERATOR = ' → ';
 	
-	private $cascading_values = [];
+	private $cascading_values = null;
 	
 	/**
 	 * @var ilCascadingSelectPlugin 
@@ -230,7 +230,7 @@ class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
 		static $maxdepth = 0;
 		
 		$depth++;
-		if(!count($a_cascading_options->options))
+		if(!is_array($a_cascading_options->options))
 		{
 			$depth--;
 			return $maxdepth;
