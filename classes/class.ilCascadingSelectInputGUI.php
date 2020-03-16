@@ -13,14 +13,14 @@ class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
 {
 	const SEPERATOR = ' → ';
 	
-	private $cascading_values = null;
+	private $cascading_values = [];
 	
 	/**
 	 * @var ilCascadingSelectPlugin 
 	 */
 	private $cascading_plugin;
 	
-	private $column_definition = array();
+	private $column_definition = [];
 	
 	/**
 	 * Constructor
