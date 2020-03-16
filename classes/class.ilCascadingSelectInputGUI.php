@@ -20,7 +20,7 @@ class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
 	 */
 	private $cascading_plugin;
 	
-	private $column_definition = array();
+	private $column_definition = [];
 	
 	/**
 	 * Constructor
@@ -230,7 +230,7 @@ class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
 		static $maxdepth = 0;
 		
 		$depth++;
-		if(!count($a_cascading_options->options))
+		if(!is_array($a_cascading_options->options))
 		{
 			$depth--;
 			return $maxdepth;
