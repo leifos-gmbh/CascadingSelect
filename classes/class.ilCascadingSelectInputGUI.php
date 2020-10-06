@@ -230,7 +230,7 @@ class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
 		static $maxdepth = 0;
 		
 		$depth++;
-		if(!is_array($a_cascading_options->options))
+		if(!is_array($a_cascading_options->options) || count($a_cascading_options->options) == 0)
 		{
 			$depth--;
 			return $maxdepth;
