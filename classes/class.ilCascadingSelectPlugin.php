@@ -21,7 +21,7 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 	 * Get plugin name
 	 * @return string
 	 */
-	public function getPluginName()
+	public function getPluginName() : string
 	{
 		return self::CASCADING_SELECT_NAME;
 	}
@@ -29,17 +29,17 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 	/**
 	 * @return int
 	 */
-	public function getDefinitionType()
+	public function getDefinitionType() : int
 	{
 		return self::CASCADING_TYPE_ID;
 	}
 
-	public function getDefinitionTypeName()
+	public function getDefinitionTypeName() : string
 	{
 		return $this->txt('cascading_type_name');
 	}
 	
-	public function getDefinitionUpdateFormTitle()
+	public function getDefinitionUpdateFormTitle() : string
 	{
 		return $this->txt('cascading_type_form_update');
 	}
@@ -47,9 +47,9 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 	/**
 	 * Lookup user data
 	 * Values are store in udf_text => nothing todo here
-	 * @param type $a_user_ids
-	 * @param type $a_field_ids
-	 * @return type
+	 * @param array $a_user_ids
+	 * @param array $a_field_ids
+	 * @return array
 	 */
 	public function lookupUserData($a_user_ids, $a_field_ids)
 	{
@@ -59,13 +59,11 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 	
 	/**
 	 * Get singleton instance
-	 * @global ilPluginAdmin $ilPluginAdmin
+     *
 	 * @return \ilCascadingSelectPlugin
 	 */
-	public static function getInstance()
+	public static function getInstance() : ilCascadingSelectPlugin
 	{
-		global $ilPluginAdmin;
-
 		if(self::$instance)
 		{
 			return self::$instance;
@@ -105,20 +103,22 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 	 *
 	 * @param string class name
 	 */
-	private final function autoLoad($a_classname)
+	private final function autoLoad(string $a_classname)
 	{
 		$class_file = $this->getClassesDirectory().'/class.'.$a_classname.'.php';
-		if(@include_once($class_file))
+		if(file_exists($class_file))
 		{
-			return;
+            include_once($class_file);
 		}
 	}
 
 	/**
 	 * @param \ilRadioOption $option
-	 * @param type $field_id
+	 * @param int $field_id
+     *
+     * @return bool
 	 */
-	public function addDefinitionTypeOptionsToRadioOption(\ilRadioOption $option, $field_id)
+	public function addDefinitionTypeOptionsToRadioOption(\ilRadioOption $option, $field_id) : bool
 	{
 		$file_input = new ilFileInputGUI($this->txt('definition_values'),'cspl_file');
 		$file_input->setSuffixes(['xml','json']);
@@ -127,7 +127,7 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 		if(!$field_id)
 		{
 			ilLoggerFactory::getLogger('udfcs')->debug('No field id given');
-			return;
+			return true;
 		}
 		
 		$settings = ilCascadingSelectSettings::getInstance();
@@ -149,6 +149,9 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 	
 	/**
 	 * Update from form
+     *
+     * @param ilPropertyFormGUI $form
+     * @param int $a_field_id
 	 */
 	public function updateDefinitionFromForm(ilPropertyFormGUI $form, $a_field_id = 0)
 	{
@@ -201,8 +204,10 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 	 * Context: edit user; registration; edit user profile 
 	 * @return ilFormPropertyGUI
 	 */
-	public function getFormPropertyForDefinition($definition, $a_changeable = true, $a_default_value = null)
+	public function getFormPropertyForDefinition($definition, $a_changeable = true, $a_default_value = null) : ilFormPropertyGUI
 	{
+	    global $DIC;
+
 		$cascading_select = new ilCascadingSelectInputGUI(
 			$definition['field_name'],
 			'udf_'.$definition['field_id']
@@ -212,7 +217,7 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 		$settings = ilCascadingSelectSettings::getInstance();
 
 		// check if values are available for field
-		$usr_id = $GLOBALS['DIC']->user()->getId();
+		$usr_id = $DIC->user()->getId();
 		$value = $a_default_value;
 		if($usr_id)
 		{
@@ -226,10 +231,9 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 		
 		$today = new ilDate(time(),IL_CAL_UNIX);
 		$with_deprecated = json_decode($settings->get('json_'.$definition['field_id']));
-		$without_deprecated_options = $this->removeDeprecatedSince((array) $with_deprecated->options, $today);
+		$without_deprecated_options = $this->removeDeprecatedOptions((array) $with_deprecated->options, $today);
 		$without_deprecated = new stdClass();
 		$without_deprecated->options = $without_deprecated_options;
-		
 		$json_obj = $this->addValueToJsonIfDeprecated(
 			$value,
 			$without_deprecated,
@@ -245,50 +249,65 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 		
 		return $cascading_select;
 	}
-	
-	/**
-	 * Remove deprecated since
-	 * @param array $a_with_deprecated
-	 * @return array
-	 */
-	protected function removeDeprecatedSince($a_with_deprecated, ilDate $today)
-	{
-		$options = [];
-		
-		foreach((array) $a_with_deprecated as $idx => $option)
-		{
-			if(strlen($option->deprecatedSince))
-			{
-				$deprecated_date = new ilDate($option->deprecatedSince, IL_CAL_DATE);
-				if(
-					ilDateTime::_after($today, $deprecated_date, IL_CAL_DAY) ||
-					ilDateTime::_equals($today, $deprecated_date, IL_CAL_DAY)
-				)
-				{
-					continue;
-				}
-			}
-			$option_without_deprecated = new stdClass();
-			$option_without_deprecated->name = $option->name;
-			
-			if(count((array) $option->options))
-			{
-				$option_without_deprecated->options = $this->removeDeprecatedSince($option->options, $today);
-			}
-			
-			$options[] = $option_without_deprecated;
-		}
-		return $options;
-	}
+
+    /**
+     * Remove deprecated options
+     * @param array $a_with_deprecated
+     * @param ilDate $today
+     *
+     * @return array
+     */
+    protected function removeDeprecatedOptions(array $a_with_deprecated, ilDate $today) : array
+    {
+        $options = [];
+
+        foreach((array) $a_with_deprecated as $idx => $option)
+        {
+            if(strlen($option->deprecatedSince))
+            {
+                $deprecated_date = new ilDate($option->deprecatedSince, IL_CAL_DATE);
+                if(
+                    ilDateTime::_after($today, $deprecated_date, IL_CAL_DAY) ||
+                    ilDateTime::_equals($today, $deprecated_date, IL_CAL_DAY)
+                )
+                {
+                    continue;
+                }
+            }
+
+            if(strlen($option->deprecatedUntil))
+            {
+                $deprecated_date = new ilDate($option->deprecatedUntil, IL_CAL_DATE);
+                if(
+                    ilDateTime::_before($today, $deprecated_date, IL_CAL_DAY) ||
+                    ilDateTime::_equals($today, $deprecated_date, IL_CAL_DAY)
+                )
+                {
+                    continue;
+                }
+            }
+
+            $option_without_deprecated = new stdClass();
+            $option_without_deprecated->name = $option->name;
+
+            if(count((array) $option->options))
+            {
+                $option_without_deprecated->options = $this->removeDeprecatedOptions($option->options, $today);
+            }
+
+            $options[] = $option_without_deprecated;
+        }
+        return $options;
+    }
 	
 	/**
 	 * Add value to json if deprecated
-	 * @param string $value
-	 * @param type $json_clean
-	 * @param type $json_deprecated
-	 * @return type
+	 * @param string|null $value
+	 * @param object $json_clean
+	 * @param object $json_deprecated
+	 * @return
 	 */
-	protected function addValueToJsonIfDeprecated($value, $json_clean, $json_deprecated)
+	protected function addValueToJsonIfDeprecated( ?string $value, object $json_clean, object $json_deprecated)
 	{
 		$single_values = explode(" → ", $value);
 		if(!count($single_values))
@@ -305,14 +324,16 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 	
 	/**
 	 * 
-	 * @param type $values
+	 * @param array $values
 	 * @param array $options_clean
 	 * @param array $options_deprecated
+     *
+     * @return array
 	 */
-	protected function addValueToJsonIfDeprecatedForOptions($values, array $options_clean, array $options_deprecated)
+	protected function addValueToJsonIfDeprecatedForOptions(array $values, array $options_clean, array $options_deprecated) : array
 	{
 		$current_value = array_shift($values);
-		
+
 		foreach($options_deprecated as $option)
 		{
 			ilLoggerFactory::getLogger('udfcs')->debug('Comparing ' . $current_value.' with: ' . $option->name);
@@ -350,8 +371,10 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 	/**
 	 * Parse column specification
 	 * @param SimpleXMLElement $root
+     *
+     * @return array
 	 */
-	protected function transformXmlColSpec(SimpleXMLElement $root)
+	protected function transformXmlColSpec(SimpleXMLElement $root) : array
 	{
 		$columns = [];
 		foreach($root->children() as $child)
@@ -360,9 +383,12 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 			{
 				continue;
 			}
+			$n = 0;
 			foreach($child->children() as $column)
 			{
-				$columns[] = (string) $column['name'];
+				$columns[$n]['name'] = (string) $column['name'];
+				$columns[$n]['default'] = (string) $column['default'];
+				$n++;
 			}
 		}
 		return $columns;
@@ -371,9 +397,13 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 
 	/**
 	 * Parse xml to json
+     *
+     * @param SimpleXMLElement $root
+     * @param bool $a_filter_deprecated
+     *
 	 * @return string json
 	 */
-	protected function transformXml(SimpleXMLElement $root, $a_filter_deprecated = true)
+	protected function transformXml(SimpleXMLElement $root, bool $a_filter_deprecated = true) : string
 	{
 		$node = new stdClass();
 		
@@ -390,9 +420,12 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 	/**
 	 * Recursion for 
 	 * @param SimpleXMLElement $element
-	 * @return \stdClass
+     * @param bool $a_filter_deprecated
+     * @param bool $a_is_deprecated
+     *
+	 * @return array
 	 */
-	protected function addOptions(SimpleXMLElement $element,$a_filter_deprecated = true, $a_is_deprecated = false)
+	protected function addOptions(SimpleXMLElement $element, bool $a_filter_deprecated = true, bool $a_is_deprecated = false) : array
 	{
 		$options = array();
 		
@@ -421,6 +454,11 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 				{
 					$option->deprecatedSince = (string) $select_option['deprecatedSince'];
 				}
+
+                if(strlen((string) $select_option['deprecatedUntil']))
+                {
+                    $option->deprecatedUntil = (string) $select_option['deprecatedUntil'];
+                }
 			}
 			
 			

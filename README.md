@@ -3,10 +3,10 @@
 This ILIAS plugin provides a custom user data field that provides the possibility to create cascading selection lists.
 
 **Minimum ILIAS Version:**
-6.0
+7.0
 
 **Maximum ILIAS Version:**
-6.99
+7.99
 
 **Responsible Developer:**
 Stefan Meyer <meyer at leifos dot com>
