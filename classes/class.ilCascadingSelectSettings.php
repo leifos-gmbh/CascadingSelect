@@ -2,21 +2,25 @@
 class ilCascadingSelectSettings
 {
 	private static $instance = null;
-	
+
+	private $ilDB;
 	
 	/**
 	 * Singleton constructor
 	 */
 	protected function __construct()
 	{
+	    global $DIC;
+
+	    $this->ilDB = $DIC->database();
 		
 	}
 	
 	/**
 	 * Get instance
-	 * @return type
+	 * @return self
 	 */
-	public static function getInstance()
+	public static function getInstance() : self
 	{
 		if(self::$instance)
 		{
@@ -24,13 +28,16 @@ class ilCascadingSelectSettings
 		}
 		return self::$instance = new self();
 	}
-	
-	public function set($a_keyword, $a_value)
+
+    /**
+     * @param string $a_keyword
+     * @param string $a_value
+     */
+    public function set(string $a_keyword, string $a_value)
 	{
-		global $ilDB;
 		
 		$this->delete($a_keyword);
-		$ilDB->insert('udf_plugin_cselect', 
+		$this->ilDB->insert('udf_plugin_cselect',
 			array(
 				"keyword" => array("text", $a_keyword),
 				"keyword_value" => array('clob', $a_value)
@@ -40,28 +47,29 @@ class ilCascadingSelectSettings
 	
 	/**
 	 * Get value
-	 * @global type $ilDB
-	 * @param type $a_keyword
-	 * @param type $a_default
-	 * @return type
+	 * @global object $ilDB
+	 * @param string $a_keyword
+	 * @param string $a_default
+	 * @return string
 	 */
-	public function get($a_keyword, $a_default = '')
+	public function get(string $a_keyword, string $a_default = '') : string
 	{
-		global $ilDB;
 		
-		$query = "SELECT * FROM udf_plugin_cselect WHERE  keyword =".$ilDB->quote($a_keyword, "text");
-		$res = $ilDB->query($query);
+		$query = "SELECT * FROM udf_plugin_cselect WHERE  keyword =".$this->ilDB->quote($a_keyword, "text");
+		$res = $this->ilDB->query($query);
 		
-		while ($row = $ilDB->fetchAssoc($res))
+		while ($row = $this->ilDB->fetchAssoc($res))
 		{
 			return $row['keyword_value'];
 		}
 		return $a_default;
 	}
-	
-	public function delete($a_keyword)
+
+    /**
+     * @param string $a_keyword
+     */
+    public function delete(string $a_keyword)
 	{
-		global $ilDB;
-		$ilDB->manipulate("DELETE FROM udf_plugin_cselect WHERE keyword = ".$ilDB->quote($a_keyword, "text"));
+		$this->ilDB->manipulate("DELETE FROM udf_plugin_cselect WHERE keyword = ".$this->ilDB->quote($a_keyword, "text"));
 	}
 }

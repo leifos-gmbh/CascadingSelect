@@ -9,7 +9,7 @@ This ILIAS plugin provides a custom user data field that provides the possibilit
 6.99
 
 **Responsible Developer:**
-Stefan Meyer <meyer at leifos dot com>
+Marvin Barz <barz at leifos dot com>
 
 **Supported Languages:**
 German, English
