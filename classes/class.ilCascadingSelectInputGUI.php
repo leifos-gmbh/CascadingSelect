@@ -98,7 +98,7 @@ class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
 		$this->cascading_values = $a_cascading_options;
 	}
 	
-	public function getCascadingOptions() : object
+	public function getCascadingOptions() : ?object
 	{
 		return $this->cascading_values;
 	}
@@ -242,10 +242,10 @@ class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
 	}
 
     /**
-     * @param object $a_cascading_options
+     * @param object|null $a_cascading_options
      * @return int
      */
-    protected function parseLevels(object $a_cascading_options) : int
+    protected function parseLevels(?object $a_cascading_options) : int
 	{
 		static $depth = 0;
 		static $maxdepth = 0;

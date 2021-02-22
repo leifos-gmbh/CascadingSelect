@@ -122,6 +122,7 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 	{
 		$file_input = new ilFileInputGUI($this->txt('definition_values'),'cspl_file');
 		$file_input->setSuffixes(['xml','json']);
+        $file_input->setRequired('true');
 		$option->addSubItem($file_input);
 		
 		if(!$field_id)
@@ -234,13 +235,19 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 		$without_deprecated_options = $this->removeDeprecatedOptions((array) $with_deprecated->options, $today);
 		$without_deprecated = new stdClass();
 		$without_deprecated->options = $without_deprecated_options;
-		$json_obj = $this->addValueToJsonIfDeprecated(
-			$value,
-			$without_deprecated,
-			json_decode($settings->get('json_deprecated_'.$definition['field_id']))
-		);
-		
-		$cascading_select->setCascadingOptions($json_obj);
+
+        try {
+            $json_obj = $this->addValueToJsonIfDeprecated(
+                $value,
+                $without_deprecated,
+                json_decode($settings->get('json_deprecated_'.$definition['field_id']))
+            );
+
+            $cascading_select->setCascadingOptions($json_obj);
+        } catch (InvalidArgumentException $exception) {
+            ilLoggerFactory::getLogger('udfcs')->error($exception->getMessage());
+            $definition['required'] = false;
+        }
 		
 		$coldef = $settings->get('colspec_'.$definition['field_id'],  serialize(array()));
 		$cascading_select->setColumnDefinition(unserialize($coldef));
@@ -304,17 +311,23 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 	 * Add value to json if deprecated
 	 * @param string|null $value
 	 * @param object $json_clean
-	 * @param object $json_deprecated
+	 * @param object|null $json_deprecated
+     *
 	 * @return
+     * @throws InvalidArgumentException
 	 */
-	protected function addValueToJsonIfDeprecated( ?string $value, object $json_clean, object $json_deprecated)
+	protected function addValueToJsonIfDeprecated( ?string $value, object $json_clean, ?object $json_deprecated)
 	{
 		$single_values = explode(" → ", $value);
 		if(!count($single_values))
 		{
 			return $json_clean;
 		}
-		
+
+        if (!is_object($json_deprecated)) {
+            throw new InvalidArgumentException("Deprecated JSON value is not set in Database");
+        }
+
 		$json_clean->options = $this->addValueToJsonIfDeprecatedForOptions(
 			$single_values, 
 			(array) $json_clean->options, 
