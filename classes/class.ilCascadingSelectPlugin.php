@@ -115,10 +115,8 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 	/**
 	 * @param \ilRadioOption $option
 	 * @param int $field_id
-     *
-     * @return bool
 	 */
-	public function addDefinitionTypeOptionsToRadioOption(\ilRadioOption $option, $field_id) : bool
+	public function addDefinitionTypeOptionsToRadioOption(\ilRadioOption $option, $field_id)
 	{
 		$file_input = new ilFileInputGUI($this->txt('definition_values'),'cspl_file');
 		$file_input->setSuffixes(['xml','json']);
