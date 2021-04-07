@@ -370,10 +370,12 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 					$options_clean[] = $found;
 				}
 				// call subnode
-				$found->options = $this->addValueToJsonIfDeprecatedForOptions(
-					$values, 
-					(array) $found->options, 
-					(array) $option->options);
+                if(isset($found->options)) {
+                    $found->options = $this->addValueToJsonIfDeprecatedForOptions(
+                        $values,
+                        (array) $found->options,
+                        (array) $option->options);
+                }
 			}
 		}
 		return $options_clean;

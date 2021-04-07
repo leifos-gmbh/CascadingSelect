@@ -46,12 +46,10 @@ $(document).ready(function () {
 			currentElement = currentElement.trim();
 		}
 
-		console.log(columnDef);
-		console.log(level);
 
 		if(typeof subOptions.options !== 'undefined' && subOptions.options.length === 0 && typeof columnDef[level] !== 'undefined') {
-			var defaultValue = {'name' : columnDef[level]['default']}
-			subOptions.options.push(defaultValue);
+			var defaultValue = columnDef[level]['default'];
+			writeDefaultOptionToHiddenValue(defaultValue);
 		}
 
 		$.each(subOptions.options, function (i, option) {
@@ -84,6 +82,25 @@ $(document).ready(function () {
 			}
 		}
 		$("#" + id + '_hidden').val(hidden.join(pathSeparator));
+	}
+
+	function writeDefaultOptionToHiddenValue(defaultValue)
+	{
+
+		var hidden = $("#" + id + '_hidden');
+		var hiddenValue = hidden.val().split(pathSeparator)
+
+		for(i=0;i<=hiddenValue.length;i++) {
+			if(hiddenValue[i] === selectText) {
+				hiddenValue.splice(i, 1);
+			}
+		}
+
+		hiddenValue.push(defaultValue)
+
+		if(hiddenValue.length <= levels) {
+			hidden.val(hiddenValue.join(pathSeparator));
+		}
 	}
 
 	function changeSelectVisibility(id, levels)

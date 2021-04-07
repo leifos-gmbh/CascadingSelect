@@ -158,7 +158,7 @@ class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
             }
 		}
 		
-		$levels = $this->parseLevels($this->getCascadingOptions());
+		$levels = $this->parseLevelsOfCurrentSelection($this->getCascadingOptions(), $confirmed_values);
 		if(
 			$this->getRequired() &&
 			(count($confirmed_values) < $levels)
@@ -270,6 +270,35 @@ class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
 		$depth--;
 		return $maxdepth;
 	}
+
+    /**
+     * @param object|null $a_cascading_options
+     * @param array $current_options
+     * @return int
+     */
+    protected function parseLevelsOfCurrentSelection(?object $a_cascading_options, array $current_options) : int
+    {
+        static $depth;
+
+        $depth++;
+        if(!is_array($a_cascading_options->options) || count($a_cascading_options->options) == 0) {
+            $depth--;
+            return $depth;
+        }
+
+        foreach ($a_cascading_options->options as $casc_options) {
+            if(in_array($casc_options->name, $current_options)) {
+                if(isset($casc_options->options) && empty($casc_options->options)) {
+                    $depth++;
+                    return $depth;
+                } else {
+                    $this->parseLevelsOfCurrentSelection($casc_options, $current_options);
+                }
+            }
+        }
+
+        return $depth;
+    }
 
 }
 ?>
