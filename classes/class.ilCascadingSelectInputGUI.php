@@ -288,12 +288,7 @@ class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
 
         foreach ($a_cascading_options->options as $casc_options) {
             if(in_array($casc_options->name, $current_options)) {
-                if(isset($casc_options->options) && empty($casc_options->options)) {
-                    $depth++;
-                    return $depth;
-                } else {
                     $this->parseLevelsOfCurrentSelection($casc_options, $current_options);
-                }
             }
         }
 

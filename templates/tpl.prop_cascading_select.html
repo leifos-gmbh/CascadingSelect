@@ -47,7 +47,8 @@ $(document).ready(function () {
 		}
 
 
-		if(typeof subOptions.options !== 'undefined' && subOptions.options.length === 0 && typeof columnDef[level] !== 'undefined') {
+
+		if(typeof subOptions.options !== 'undefined' && subOptions.options.length === 0 && typeof columnDef[level] !== 'undefined' && columnDef[level]['default'] !== '') {
 			var defaultValue = columnDef[level]['default'];
 			writeDefaultOptionToHiddenValue(defaultValue);
 		}
