@@ -36,6 +36,7 @@ $(document).ready(function () {
 	var optionsDef = $.parseJSON(optionsDefJson);
 	var columnDef = $.parseJSON(columnDefJson);
 
+	var hidden = $("#" + id + '_hidden');
 	
 	function setOptionsForSelection(input, subOptions, level)
 	{
@@ -46,11 +47,11 @@ $(document).ready(function () {
 			currentElement = currentElement.trim();
 		}
 
-
-
-		if(typeof subOptions.options !== 'undefined' && subOptions.options.length === 0 && typeof columnDef[level] !== 'undefined' && columnDef[level]['default'] !== '') {
-			var defaultValue = columnDef[level]['default'];
-			writeDefaultOptionToHiddenValue(defaultValue);
+		if((typeof columnDef[level] !== 'undefined' && columnDef[level]['default'] !== '')) {
+			if((typeof subOptions.options !== 'undefined' && subOptions.options.length === 0) || (typeof subOptions.options === 'undefined')) {
+				var defaultValue = columnDef[level]['default'];
+				writeDefaultOptionToHiddenValue(defaultValue);
+			}
 		}
 
 		$.each(subOptions.options, function (i, option) {
@@ -74,24 +75,24 @@ $(document).ready(function () {
 	
 	function writeOptionsToHiddenValue()
 	{
-		
-		var hidden = [];
+		var hiddenValues = [];
 		for(i=0;i<levels;i++) {
 			selectedText = $('#' + id + '_' + i + ' :selected').text();
 			if(selectedText.length > 0) {
-				hidden[i] = selectedText.trim(); 
+				hiddenValues[i] = selectedText.trim();
 			}
 		}
-		$("#" + id + '_hidden').val(hidden.join(pathSeparator));
+		hidden.val(hiddenValues.join(pathSeparator));
 	}
 
 	function writeDefaultOptionToHiddenValue(defaultValue)
 	{
-
-		var hidden = $("#" + id + '_hidden');
 		var hiddenValue = hidden.val().split(pathSeparator)
 
-		for(i=0;i<=hiddenValue.length;i++) {
+		for(i=hiddenValue.length - 1;i >= 0;i--) {
+			if(hiddenValue[i] === defaultValue) {
+				return;
+			}
 			if(hiddenValue[i] === selectText) {
 				hiddenValue.splice(i, 1);
 			}

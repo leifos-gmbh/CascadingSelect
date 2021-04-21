@@ -168,7 +168,8 @@ class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
 			return false;
 		}
 
-        $post_req[$this->getPostVar()] = implode(self::SEPERATOR, $confirmed_values);
+
+        $_POST[$this->getPostVar()] = implode(self::SEPERATOR, $confirmed_values);
 		return $this->checkSubItemsInput();
 	}
 	
@@ -276,23 +277,24 @@ class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
      * @param array $current_options
      * @return int
      */
-    protected function parseLevelsOfCurrentSelection(?object $a_cascading_options, array $current_options) : int
+    protected function parseLevelsOfCurrentSelection(?object $a_cascading_options, array $current_options, $depth = 1) : int
     {
-        static $depth;
 
-        $depth++;
         if(!is_array($a_cascading_options->options) || count($a_cascading_options->options) == 0) {
-            $depth--;
-            return $depth;
+            return 0;
         }
 
+        $maxdepth = 0;
         foreach ($a_cascading_options->options as $casc_options) {
-            if(in_array($casc_options->name, $current_options)) {
-                    $this->parseLevelsOfCurrentSelection($casc_options, $current_options);
+            if (in_array($casc_options->name, $current_options)) {
+                $maxdepth = $this->parseLevelsOfCurrentSelection($casc_options, $current_options, $depth+1);
+                if ($maxdepth) {
+                    break;
+                }
             }
         }
 
-        return $depth;
+        return max($maxdepth, $depth);
     }
 
 }
