@@ -212,19 +212,19 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
 
         
         $with_deprecated = json_decode($settings->get('json_' . $definition['field_id']));
-        $effective_choices = new StdClass();
+        $without_deprecated = new StdClass();
         
         if ($ignore_deprecated) {
-            $effective_choices->options = (array) $with_deprecated->options;
+            $without_deprecated->options = (array) $with_deprecated->options;
         } else {
             $today = new ilDate(time(), IL_CAL_UNIX);
             $without_deprecated_options = $this->removeDeprecatedOptions((array) $with_deprecated->options, $today);
-            $effective_choices->options = $without_deprecated_options;
+            $without_deprecated->options = $without_deprecated_options;
         }
         try {
             $json_obj = $this->addValueToJsonIfDeprecated(
                 $value,
-                $effective_choices,
+                $without_deprecated,
                 json_decode($settings->get('json_deprecated_' . $definition['field_id']))
             );
 
