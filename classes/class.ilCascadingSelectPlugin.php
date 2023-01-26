@@ -186,7 +186,8 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
     public function getFormPropertyForDefinition(
         $definition,
         $a_changeable = true,
-        $a_default_value = null
+        $a_default_value = null,
+        $ignore_deprecated = false
     ) : ilFormPropertyGUI {
         global $DIC;
 
@@ -209,16 +210,21 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
             }
         }
 
-        $today = new ilDate(time(), IL_CAL_UNIX);
+        
         $with_deprecated = json_decode($settings->get('json_' . $definition['field_id']));
-        $without_deprecated_options = $this->removeDeprecatedOptions((array) $with_deprecated->options, $today);
-        $without_deprecated = new stdClass();
-        $without_deprecated->options = $without_deprecated_options;
-
+        $effective_choices = new StdClass();
+        
+        if ($ignore_deprecated) {
+            $effective_choices->options = (array) $with_deprecated->options;
+        } else {
+            $today = new ilDate(time(), IL_CAL_UNIX);
+            $without_deprecated_options = $this->removeDeprecatedOptions((array) $with_deprecated->options, $today);
+            $effective_choices->options = $without_deprecated_options;
+        }
         try {
             $json_obj = $this->addValueToJsonIfDeprecated(
                 $value,
-                $without_deprecated,
+                $effective_choices,
                 json_decode($settings->get('json_deprecated_' . $definition['field_id']))
             );
 
