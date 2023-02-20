@@ -2,7 +2,7 @@
 /* Copyright (c) 1998-2010 ILIAS open source, Extended GPL, see docs/LICENSE */
 
 include_once './Services/User/classes/class.ilUDFDefinitionPlugin.php';
-include_once '.Customizing/global/plugins/Services/User/UDFDefinition/CascadingSelect/classes/class.ilCascadingSelectInputGUI.php';
+include_once './Customizing/global/plugins/Services/User/UDFDefinition/CascadingSelect/classes/class.ilCascadingSelectInputGUI.php';
 
 /**
  * Description of class class
