@@ -154,7 +154,7 @@ class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
             if ((!array_key_exists($level,$confirmed_values)) and (!array_key_exists($level,$values))) {
                 $confirmed_values[$level] = $default['default'];
             }
-            level++;
+            $level++;
         }
 
         $levels = $this->parseLevels($this->getCascadingOptions());
