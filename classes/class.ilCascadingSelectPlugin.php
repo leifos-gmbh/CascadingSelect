@@ -13,6 +13,8 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
     public const CASCADING_SELECT_NAME = 'CascadingSelect';
 
     public const CASCADING_TYPE_ID = 51;
+    
+    public const INNER_SEPERATOR = ilCascadingSelectInputGUI::INNER_SEPERATOR;
 
     private static $instance = null;
 
