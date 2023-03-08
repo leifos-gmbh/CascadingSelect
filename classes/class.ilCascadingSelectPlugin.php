@@ -2,6 +2,7 @@
 /* Copyright (c) 1998-2010 ILIAS open source, Extended GPL, see docs/LICENSE */
 
 include_once './Services/User/classes/class.ilUDFDefinitionPlugin.php';
+include_once './Customizing/global/plugins/Services/User/UDFDefinition/CascadingSelect/classes/class.ilCascadingSelectInputGUI.php';
 
 /**
  * Description of class class
@@ -12,6 +13,8 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
     public const CASCADING_SELECT_NAME = 'CascadingSelect';
 
     public const CASCADING_TYPE_ID = 51;
+    
+    public const INNER_SEPERATOR = ilCascadingSelectInputGUI::INNER_SEPERATOR;
 
     private static $instance = null;
 
@@ -186,9 +189,14 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
     public function getFormPropertyForDefinition(
         $definition,
         $a_changeable = true,
-        $a_default_value = null
+        $a_default_value = null,
+        $ignore_deprecated = false
     ) : ilFormPropertyGUI {
         global $DIC;
+        
+        $rbacsystem = $DIC->rbac()->system();
+        $fullmode = $rbacsystem->checkAccess("edit_permission",7);
+        
 
         $cascading_select = new ilCascadingSelectInputGUI(
             $definition['field_name'],
@@ -209,12 +217,17 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
             }
         }
 
-        $today = new ilDate(time(), IL_CAL_UNIX);
+        
         $with_deprecated = json_decode($settings->get('json_' . $definition['field_id']));
-        $without_deprecated_options = $this->removeDeprecatedOptions((array) $with_deprecated->options, $today);
-        $without_deprecated = new stdClass();
+        $without_deprecated = new StdClass();
+        
+        if ($ignore_deprecated) {
+            $fullmode = true;
+        }
+        $today = new ilDate(time(), IL_CAL_UNIX);
+        $without_deprecated_options = $this->removeDeprecatedOptions((array) $with_deprecated->options, $today, $fullmode);
         $without_deprecated->options = $without_deprecated_options;
-
+        
         try {
             $json_obj = $this->addValueToJsonIfDeprecated(
                 $value,
@@ -242,18 +255,25 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
      * @param ilDate $today
      * @return array
      */
-    protected function removeDeprecatedOptions(array $a_with_deprecated, ilDate $today) : array
+    protected function removeDeprecatedOptions(array $a_with_deprecated, ilDate $today, bool $all = false) : array
     {
         $options = [];
 
         foreach ((array) $a_with_deprecated as $idx => $option) {
+            
+            $optname = $option->name;
+            
             if (strlen($option->deprecatedSince)) {
                 $deprecated_date = new ilDate($option->deprecatedSince, IL_CAL_DATE);
                 if (
                     ilDateTime::_after($today, $deprecated_date, IL_CAL_DAY) ||
                     ilDateTime::_equals($today, $deprecated_date, IL_CAL_DAY)
                 ) {
-                    continue;
+                    if ($all) {
+                        $optname = $option->name . self::INNER_SEPERATOR . " - " . $option->deprecatedSince;
+                    } else {
+                        continue;
+                    }
                 }
             }
 
@@ -263,15 +283,19 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
                     ilDateTime::_before($today, $deprecated_date, IL_CAL_DAY) ||
                     ilDateTime::_equals($today, $deprecated_date, IL_CAL_DAY)
                 ) {
-                    continue;
+                    if ($all) {
+                        $optname = $option->name . self::INNER_SEPERATOR . " + " . $option->deprecatedUntil;
+                    } else {
+                        continue;
+                    }
                 }
             }
 
             $option_without_deprecated = new stdClass();
-            $option_without_deprecated->name = $option->name;
+            $option_without_deprecated->name = $optname;
 
             if (count((array) $option->options)) {
-                $option_without_deprecated->options = $this->removeDeprecatedOptions($option->options, $today);
+                $option_without_deprecated->options = $this->removeDeprecatedOptions($option->options, $today, $all);
             }
 
             $options[] = $option_without_deprecated;
@@ -402,18 +426,6 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
     ) : array {
         ++$level;
         $options = array();
-        if (!count($element->children()) && isset($colspec[$level - 1])) {
-            $option = new stdClass();
-            $option->name = $colspec[$level - 1]['default'];
-            $option->deprecated = 1;
-            $child = $element->addChild('option');
-            $ret = $this->addOptions($level, $colspec, $child, $a_filter_deprecated, $a_is_deprecated);
-            if (count($ret)) {
-                $option->options = $ret;
-            }
-            $options[] = $option;
-            return $options;
-        }
 
         foreach ($element->children() as $select_option) {
             if ($select_option->getName() != 'option') {

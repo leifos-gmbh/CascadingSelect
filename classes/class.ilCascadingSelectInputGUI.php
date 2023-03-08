@@ -11,6 +11,7 @@ include_once './Services/Form/classes/class.ilSubEnabledFormPropertyGUI.php';
 class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
 {
     public const SEPERATOR = ' → ';
+    public const INNER_SEPERATOR = ' ↕ ';
 
     private $cascading_values = null;
 
@@ -134,19 +135,26 @@ class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
         foreach ($values as $value) {
 
             foreach ((array) $options as $option) {
+                // clean out everything from first INNER_SEPERATOR
                 if ($option->name == trim($value)) {
-                    $confirmed_values[] = trim($value);
+                    if (strpos($option->name,self::INNER_SEPERATOR)) {
+                        $confirmed = explode(self::INNER_SEPERATOR,$option->name) [0];
+                    } else {
+                        $confirmed = $option->name;
+                    }
+                    $confirmed_values[] = trim($confirmed);
                     $options = $option->options;
                     break;
                 }
             }
-
-            foreach ($col_defs as $default) {
-                if ($default['default'] == trim($value)) {
-                    $confirmed_values[] = trim($value);
-                    break;
-                }
+        }
+        // set default if no data is given for a level (if a default is set)
+        $level = 0;
+        foreach ($col_defs as $default) {
+            if ((!array_key_exists($level,$confirmed_values)) and (!array_key_exists($level,$values))) {
+                $confirmed_values[$level] = $default['default'];
             }
+            $level++;
         }
 
         $levels = $this->parseLevels($this->getCascadingOptions());
@@ -158,7 +166,7 @@ class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
             return false;
         }
 
-        $post_req[$this->getPostVar()] = implode(self::SEPERATOR, $confirmed_values);
+        $_POST[$this->getPostVar()] = implode(self::SEPERATOR, $confirmed_values);
         return $this->checkSubItemsInput();
     }
 
