@@ -1,3 +1,11 @@
 definition_values#:#Konfiguration der Auswahlisten
 cascading_type_name#:#Auswahlliste (kaskadierend)
 cascading_type_form_update#:#Auswahlliste (kaskadierend) bearbeiten
+cascading_incomplete#:#Dieses Feld muss entweder vollständig oder gar nicht ausgefüllt werden.
+cascading_required#:#Dieses Feld muss vollständig ausgefüllt werden.
+cascading_columns#:#Spalten
+cascading_default#:#Default
+cascading_options#:#Optionen
+cascading_deprecated#:#ungültig
+cascading_deprecated_since#:#seit %s ungültig
+cascading_deprecated_until#:#bis %s ungültig

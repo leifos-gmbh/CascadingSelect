@@ -1,11 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 /* Copyright (c) 1998-2010 ILIAS open source, Extended GPL, see docs/LICENSE */
 
-include_once './Services/Form/classes/class.ilSubEnabledFormPropertyGUI.php';
+use Leifos\CascadingSelect\DataObjects\Factory;
+use Leifos\CascadingSelect\DataObjects\CascadingOptions;
+use Leifos\CascadingSelect\DataObjects\ColumnsDefinition;
+use Leifos\CascadingSelect\Service\Language;
+use Leifos\CascadingSelect\Service\Templates;
 
 /**
- * Description of class class
  * @author Stefan Meyer <smeyer.ilias@gmx.de>
  */
 class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
@@ -13,207 +18,171 @@ class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
     public const SEPERATOR = ' → ';
     public const INNER_SEPERATOR = ' ↕ ';
 
-    private $cascading_values = null;
+    private Factory $factory;
+    private Language $language;
+    private Templates $templates;
 
-    /**
-     * @var ilCascadingSelectPlugin
-     */
-    private $cascading_plugin;
+    private ?CascadingOptions $cascading_values = null;
+    private ColumnsDefinition $column_definition;
+    private ?string $value = null;
 
-    private $column_definition = [];
+    public function __construct(
+        Factory $factory,
+        Language $language,
+        Templates $templates,
+        string $title = '',
+        string $postvar = ''
+    ) {
+        $this->factory = $factory;
+        $this->language = $language;
+        $this->templates = $templates;
 
-    /**
-     * Constructor
-     * @param string $a_title   Title
-     * @param string $a_postvar Post Variable
-     */
-    public function __construct($a_title = "", $a_postvar = "")
-    {
-        $this->cascading_plugin = ilCascadingSelectPlugin::getInstance();
-
-        parent::__construct($a_title, $a_postvar);
+        parent::__construct($title, $postvar);
         $this->setType("cascadingSelect");
     }
 
-    /**
-     * Set Options.
-     * @param array
-     */
-    public function setOptions(array $a_options)
+    public function setColumnDefinition(ColumnsDefinition $coldef): void
     {
-        $this->options = $a_options;
+        $this->column_definition = $coldef;
     }
 
-    /**
-     * Get Options.
-     * @return    array    Options.
-     */
-    public function getOptions() : array
-    {
-        return $this->options ? $this->options : array();
-    }
-
-    public function setColumnDefinition($a_coldef)
-    {
-        $this->column_definition = $a_coldef;
-    }
-
-    /**
-     * Get column definition
-     * @return array
-     */
-    public function getColumnDefinition() : array
+    public function getColumnDefinition(): ColumnsDefinition
     {
         return $this->column_definition;
     }
 
-    /**
-     * Set Value.
-     * @param string|null $a_value Value
-     */
-    public function setValue($a_value)
+    public function setValue(?string $value): void
     {
-        $this->value = $a_value;
+        $this->value = $value;
     }
 
-    /**
-     * Get Value.
-     * @return string|null    Value
-     */
-    public function getValue() : ?string
+    public function getValue(): ?string
     {
         return $this->value;
     }
 
-    /**
-     * @param object $a_cascading_options
-     */
-    public function setCascadingOptions(object $a_cascading_options)
+    public function setCascadingOptions(CascadingOptions $cascading_options): void
     {
-        $this->cascading_values = $a_cascading_options;
+        $this->cascading_values = $cascading_options;
     }
 
-    public function getCascadingOptions() : ?object
+    public function getCascadingOptions(): ?CascadingOptions
     {
         return $this->cascading_values;
     }
 
-    /**
-     * Set values by array
-     * @param array $a_values
-     */
-    public function setValueByArray(array $a_values)
+    public function setValueByArray(array $values): void
     {
-        $this->setValue($a_values[$this->getPostVar()]);
+        $this->setValue($values[$this->getPostVar()]);
         foreach ($this->getSubItems() as $item) {
-            $item->setValueByArray($a_values);
+            $item->setValueByArray($values);
         }
     }
 
-    /**
-     * Check input, strip slashes etc. set alert, if input is not ok.
-     * @return    bool Input ok, true/false
-     */
-    public function checkInput() : bool
+    public function checkInput(): bool
     {
-        global $DIC;
+        $confirmed_values = $this->getPostData();
 
-        $lng = $DIC->language();
-        $post_req = $DIC->http()->request()->getParsedBody();
+        $levels = $this->parseLevels($this->getCascadingOptions());
+        if (
+            (count($confirmed_values) < $levels) &&
+            ($this->getRequired() || count($confirmed_values) > 0)
+        ) {
+            $this->setAlert($this->language->txt(
+                $this->getRequired() ? 'cascading_required' : 'cascading_incomplete'
+            ));
+            return false;
+        }
 
-        $post_req[$this->getPostVar()] = ilUtil::stripSlashes($post_req[$this->getPostVar()]);
+        return $this->checkSubItemsInput();
+    }
+
+    public function getInput(): string
+    {
+        $confirmed_values = $this->getPostData();
+        return implode(self::SEPERATOR, $confirmed_values);
+    }
+
+    protected function getPostData(): array
+    {
+        $post_req = $this->request->getParsedBody();
 
         // validate options against options
-        $values = explode(self::SEPERATOR, $post_req[$this->getPostVar()]);
+        $values = explode(
+            self::SEPERATOR,
+            ilUtil::stripSlashes((string) $post_req[$this->getPostVar()])
+        );
 
         $options = $this->getCascadingOptions();
-        $options = $options->options;
-
-        $col_defs = $this->getColumnDefinition();
 
         $confirmed_values = [];
         foreach ($values as $value) {
-
-            foreach ((array) $options as $option) {
+            foreach ($options->options($this->factory) as $option) {
                 // clean out everything from first INNER_SEPERATOR
-                if ($option->name == trim($value)) {
-                    if (strpos($option->name,self::INNER_SEPERATOR)) {
-                        $confirmed = explode(self::INNER_SEPERATOR,$option->name) [0];
+                if ($option->name() == trim($value)) {
+                    if (strpos($option->name(), self::INNER_SEPERATOR)) {
+                        $confirmed = trim(explode(self::INNER_SEPERATOR, $option->name()) [0]);
                     } else {
-                        $confirmed = $option->name;
+                        $confirmed = trim($option->name());
                     }
                     $confirmed_values[] = trim($confirmed);
-                    $options = $option->options;
+                    $options = $option;
                     break;
                 }
             }
         }
         // set default if no data is given for a level (if a default is set)
         $level = 0;
-        foreach ($col_defs as $default) {
-            if ((!array_key_exists($level,$confirmed_values)) and (!array_key_exists($level,$values))) {
-                $confirmed_values[$level] = $default['default'];
+        foreach ($this->getColumnDefinition()->defaults() as $default) {
+            if (
+                !array_key_exists($level, $confirmed_values) &&
+                !array_key_exists($level, $values) &&
+                $default
+            ) {
+                $confirmed_values[$level] = $default;
             }
             $level++;
         }
 
-        $levels = $this->parseLevels($this->getCascadingOptions());
-        if (
-            $this->getRequired() &&
-            (count($confirmed_values) < $levels)
-        ) {
-            $this->setAlert($lng->txt("msg_input_is_required"));
-            return false;
-        }
-
-        $_POST[$this->getPostVar()] = implode(self::SEPERATOR, $confirmed_values);
-        return $this->checkSubItemsInput();
+        return $confirmed_values;
     }
 
-    /**
-     * Insert property html
-     * @param ilTemplate $a_tpl
-     */
-    public function insert(ilTemplate $a_tpl)
+    public function insert(ilTemplate $tpl): void
     {
-        $a_tpl->setCurrentBlock("prop_generic");
-        $a_tpl->setVariable("PROP_GENERIC", $this->render());
-        $a_tpl->parseCurrentBlock();
+        $tpl->setCurrentBlock("prop_generic");
+        $tpl->setVariable("PROP_GENERIC", $this->render());
+        $tpl->parseCurrentBlock();
     }
 
-    /**
-     * Render cascading select
-     * @param string $a_mode
-     */
-    public function render(string $a_mode = '') : string
+    public function render(string $mode = ''): string
     {
-        global $DIC;
-
-        $lng = $DIC->language();
-
-        $template = $this->cascading_plugin->getTemplate('tpl.prop_cascading_select.html', true, true);
+        $template = $this->templates->get('tpl.prop_cascading_select.html');
+        $js_template = $this->templates->get('tpl.prop_cascading_select.js');
 
         $num_levels = $this->parseLevels($this->getCascadingOptions());
 
-        $template->setVariable('NUM_LEVELS', $num_levels);
-        $template->setVariable('UNIQUE_ID_SEL', 'udf_' . $this->getFieldId() . '_select');
-        $template->setVariable('JSON_DEF', json_encode($this->getCascadingOptions()));
-        $template->setVariable('JSON_COL', json_encode($this->getColumnDefinition()));
-        $template->setVariable('TXT_SEL', $lng->txt('links_select_one'));
+        $js_template->setVariable('NUM_LEVELS', $num_levels);
+        $js_template->setVariable('JSON_DEF', json_encode($this->getCascadingOptions()->raw()));
+        $js_template->setVariable('JSON_COL', $this->getColumnDefinition()->rawEncodedJSON());
+        $js_template->setVariable('TXT_SEL', $this->lng->txt('please_select'));
+        $js_template->setVariable('POST_VAR', $this->getPostVar());
+
         $template->setVariable('VALUE', $this->getValue());
+        $template->setVariable('UNIQUE_ID_SEL', 'udf_' . $this->getFieldId() . '_select');
+        $template->setVariable('POST_VAR', $this->getPostVar());
 
         // column titles
-        if (count($this->getColumnDefinition())) {
-            foreach ($this->getColumnDefinition() as $colspec) {
+        if ($this->getColumnDefinition()->count()) {
+            foreach ($this->getColumnDefinition()->names() as $name) {
                 $template->setCurrentBlock('level_text');
-                $template->setVariable('TXT_COL', $colspec['name']);
+                $template->setVariable('TXT_COL', $name);
                 $template->parseCurrentBlock();
             }
         }
 
         for ($i = 0; $i < $num_levels; $i++) {
             $template->setCurrentBlock('level_options');
-            $template->setVariable('TXT_LEVEL_OPTION', $lng->txt('links_select_one'));
+            $template->setVariable('TXT_LEVEL_OPTION', $this->lng->txt('please_select'));
             $template->setVariable('VAL_LEVEL_OPTION', '');
 
             $template->setCurrentBlock('level_select');
@@ -221,28 +190,20 @@ class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
                 $template->setVariable('DISABLED', 'disabled="disabled"');
             }
             $template->setVariable('ID', $this->getFieldId() . '_' . $i);
-            $template->setVariable('POST_VAR', $this->getPostVar());
             $template->parseCurrentBlock();
         }
 
+        $this->global_tpl->addOnLoadCode($js_template->get());
         return $template->get();
     }
 
-    protected function getFirstLevelOptions()
-    {
-    }
-
-    /**
-     * @param object|null $a_cascading_options
-     * @return int
-     */
-    protected function parseLevels(?object $a_cascading_options) : int
+    protected function parseLevels(?CascadingOptions $cascading_options): int
     {
         static $depth = 0;
         static $maxdepth = 0;
 
         $depth++;
-        if (!is_array($a_cascading_options->options) || count($a_cascading_options->options) == 0) {
+        if ($cascading_options->countOptions() === 0) {
             $depth--;
             return $maxdepth;
         }
@@ -251,13 +212,10 @@ class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
             $maxdepth = $depth;
         }
 
-        foreach ($a_cascading_options->options as $option) {
+        foreach ($cascading_options->options($this->factory) as $option) {
             $this->parseLevels($option);
         }
         $depth--;
         return $maxdepth;
     }
-
 }
-
-?>

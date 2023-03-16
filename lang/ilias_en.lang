@@ -1,3 +1,11 @@
-definition_values#:#Konfiguration der Auswahlisten
-cascading_type_name#:#Auswahlliste (kaskadierend)
-cascading_type_form_update#:#Auswahlliste (kaskadierend) bearbeiten
+definition_values#:#Configuration of Selection Lists
+cascading_type_name#:#Selection List (Cascading)
+cascading_type_form_update#:#Update Selection List (Cascading)
+cascading_incomplete#:#This input is incomplete. Please fill it out completely or not at all.
+cascading_required#:#This input is required. Please fill it out completely.
+cascading_columns#:#Columns
+cascading_default#:#Default
+cascading_options#:#Options
+cascading_deprecated#:#deprecated
+cascading_deprecated_since#:#deprecated since %s
+cascading_deprecated_until#:#deprecated until %s

@@ -3,13 +3,13 @@
 This ILIAS plugin provides a custom user data field that provides the possibility to create cascading selection lists.
 
 **Minimum ILIAS Version:**
-7.0
+8.0
 
 **Maximum ILIAS Version:**
-7.99
+8.99
 
 **Responsible Developer:**
-Marvin Barz <barz at leifos dot com>
+Tim Schmitz <schmitz at leifos dot de>
 
 **Supported Languages:**
 German, English
@@ -22,10 +22,10 @@ German, English
 
 3. Select "Plugins" in the menu on the right.
 
-5. Look for the CascadingSelect plugin in the table and hit the "Action" button and select "Update".
+4. Look for the CascadingSelect plugin in the table and hit the "Action" button and select "Update".
 
-6. When ILIAS update the plugin, hit the "Action" button and select "Activate" that will appear instead of the "Update" link.
+5. When ILIAS update the plugin, hit the "Action" button and select "Activate" that will appear instead of the "Update" link.
 
-7. Hit the "Action" button and select "Refresh Languages" to update the language-files.
+6. Hit the "Action" button and select "Refresh Languages" to update the language-files.
 
-8. Now, you can visit the username configuration at "Action" and "Configure"
+7. Now, you can visit the username configuration at "Action" and "Configure"
