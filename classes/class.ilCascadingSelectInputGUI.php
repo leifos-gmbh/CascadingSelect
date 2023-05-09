@@ -123,41 +123,32 @@ class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
 
         $post_req[$this->getPostVar()] = ilUtil::stripSlashes($post_req[$this->getPostVar()]);
 
-        // validate options against options
-        $values = explode(self::SEPERATOR, $post_req[$this->getPostVar()]);
+        // validate options against values
+	$values = explode(self::SEPERATOR, $post_req[$this->getPostVar()]);
 
         $options = $this->getCascadingOptions();
         $options = $options->options;
 
         $col_defs = $this->getColumnDefinition();
-
-        $confirmed_values = [];
+	$confirmed_values = [];
         foreach ($values as $value) {
-
-            foreach ((array) $options as $option) {
-                // clean out everything from first INNER_SEPERATOR
-                if ($option->name == trim($value)) {
-                    if (strpos($option->name,self::INNER_SEPERATOR)) {
-                        $confirmed = explode(self::INNER_SEPERATOR,$option->name) [0];
-                    } else {
-                        $confirmed = $option->name;
-                    }
-                    $confirmed_values[] = trim($confirmed);
-                    $options = $option->options;
-                    break;
-                }
-            }
+		$default_option=(string)array_shift($col_defs)['default'];
+		if ($default_option == trim($value)) {
+			$confirmed_values[] = trim($value);
+		} else {
+            		foreach ((array) $options as $option) {
+                	// clean out everything from first INNER_SEPERATOR
+		    	if ($option->name == trim($value))  {
+                        	$confirmed = explode(self::INNER_SEPERATOR,trim($value)) [0];
+                    		$confirmed_values[] = trim($confirmed);
+                    		$options = $option->options;
+                    		break;
+                		}
+			}
+            	}
         }
-        // set default if no data is given for a level (if a default is set)
-        $level = 0;
-        foreach ($col_defs as $default) {
-            if ((!array_key_exists($level,$confirmed_values)) and (!array_key_exists($level,$values))) {
-                $confirmed_values[$level] = $default['default'];
-            }
-            $level++;
-        }
-
-        $levels = $this->parseLevels($this->getCascadingOptions());
+	
+	$levels = $this->parseLevels($this->getCascadingOptions());
         if (
             $this->getRequired() &&
             (count($confirmed_values) < $levels)
@@ -201,7 +192,7 @@ class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
         $template->setVariable('JSON_COL', json_encode($this->getColumnDefinition()));
         $template->setVariable('TXT_SEL', $lng->txt('links_select_one'));
         $template->setVariable('VALUE', $this->getValue());
-
+	$template->setVariable('NOOPT', $this->cascading_plugin->txt('no_opts'));
         // column titles
         if (count($this->getColumnDefinition())) {
             foreach ($this->getColumnDefinition() as $colspec) {
