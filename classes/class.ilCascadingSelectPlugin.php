@@ -232,7 +232,8 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
             $json_obj = $this->addValueToJsonIfDeprecated(
                 $value,
                 $without_deprecated,
-                json_decode($settings->get('json_deprecated_' . $definition['field_id']))
+		json_decode($settings->get('json_deprecated_' . $definition['field_id'])),
+		$definition['field_id']
             );
 
             $cascading_select->setCascadingOptions($json_obj);
@@ -299,7 +300,7 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
             }
 
             $options[] = $option_without_deprecated;
-        }
+	}
         return $options;
     }
 
@@ -311,9 +312,18 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
      * @return
      * @throws InvalidArgumentException
      */
-    protected function addValueToJsonIfDeprecated(?string $value, object $json_clean, ?object $json_deprecated)
+    protected function addValueToJsonIfDeprecated(?string $value, object $json_clean, ?object $json_deprecated, $field_id = 0)
     {
-        $single_values = explode(" → ", $value);
+	    $single_values_raw = explode(" → ", $value);
+	    $single_values = [];
+       	    $settings = ilCascadingSelectSettings::getInstance();
+	    $col_defs=unserialize($settings->get('colspec_'. $field_id));
+	    
+	    foreach ($single_values_raw as $single) {
+		    if ($single != array_shift($col_defs)['default']) {
+ 		    	$single_values[] = $single;
+		    }
+	    }
         if (!count($single_values)) {
             return $json_clean;
         }
@@ -326,7 +336,7 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
             $single_values,
             (array) $json_clean->options,
             (array) $json_deprecated->options);
-        return $json_clean;
+	return $json_clean;
     }
 
     /**
@@ -340,7 +350,7 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
         array $options_clean,
         array $options_deprecated
     ) : array {
-        $current_value = array_shift($values);
+	    $current_value = array_shift($values);
 
         foreach ($options_deprecated as $option) {
             ilLoggerFactory::getLogger('udfcs')->debug('Comparing ' . $current_value . ' with: ' . $option->name);
@@ -359,16 +369,18 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
                     $found = new stdClass();
                     $found->name = $current_value;
                     $found->options = array();
-                    $options_clean[] = $found;
+		    $options_clean[] = $found;
                 }
-                // call subnode
+		// call subnode
+		if (count($values)) {
                 $found->options = $this->addValueToJsonIfDeprecatedForOptions(
                     $values,
                     (array) $found->options,
-                    (array) $option->options);
+		    (array) $option->options);
+		}
             }
         }
-        return $options_clean;
+ 	return $options_clean;
     }
 
     /**
