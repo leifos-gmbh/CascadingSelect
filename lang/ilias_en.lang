@@ -9,3 +9,4 @@ cascading_options#:#Options
 cascading_deprecated#:#deprecated
 cascading_deprecated_since#:#deprecated since %s
 cascading_deprecated_until#:#deprecated until %s
+cascading_no_opts#:#No options available.

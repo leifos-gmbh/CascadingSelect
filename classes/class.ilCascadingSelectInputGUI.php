@@ -107,41 +107,33 @@ class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
     {
         $post_req = $this->request->getParsedBody();
 
-        // validate options against options
+        // validate options against values
         $values = explode(
             self::SEPERATOR,
             ilUtil::stripSlashes((string) $post_req[$this->getPostVar()])
         );
 
         $options = $this->getCascadingOptions();
+        $defaults = $this->getColumnDefinition()->defaults();
 
         $confirmed_values = [];
         foreach ($values as $value) {
+            $default_option = $defaults->current();
+            $defaults->next();
+            if ($default_option === trim($value)) {
+                $confirmed_values[] = trim($value);
+                continue;
+            }
+
             foreach ($options->options($this->factory) as $option) {
                 // clean out everything from first INNER_SEPERATOR
-                if ($option->name() == trim($value)) {
-                    if (strpos($option->name(), self::INNER_SEPERATOR)) {
-                        $confirmed = trim(explode(self::INNER_SEPERATOR, $option->name()) [0]);
-                    } else {
-                        $confirmed = trim($option->name());
-                    }
+                if ($option->name() === trim($value)) {
+                    $confirmed = trim(explode(self::INNER_SEPERATOR, trim($value))[0]);
                     $confirmed_values[] = trim($confirmed);
                     $options = $option;
                     break;
                 }
             }
-        }
-        // set default if no data is given for a level (if a default is set)
-        $level = 0;
-        foreach ($this->getColumnDefinition()->defaults() as $default) {
-            if (
-                !array_key_exists($level, $confirmed_values) &&
-                !array_key_exists($level, $values) &&
-                $default
-            ) {
-                $confirmed_values[$level] = $default;
-            }
-            $level++;
         }
 
         return $confirmed_values;
@@ -166,6 +158,7 @@ class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
         $js_template->setVariable('JSON_COL', $this->getColumnDefinition()->rawEncodedJSON());
         $js_template->setVariable('TXT_SEL', $this->lng->txt('please_select'));
         $js_template->setVariable('POST_VAR', $this->getPostVar());
+        $js_template->setVariable('NOOPT', $this->lng->txt('cascading_no_opts'));
 
         $template->setVariable('VALUE', $this->getValue());
         $template->setVariable('UNIQUE_ID_SEL', 'udf_' . $this->getFieldId() . '_select');

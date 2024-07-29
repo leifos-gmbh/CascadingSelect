@@ -197,11 +197,14 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
         $today = new ilDate(time(), IL_CAL_UNIX);
         $without_deprecated = $this->removeDeprecatedOptions($with_deprecated, $today, $fullmode);
 
+        $coldef = $this->container->settings()->getColSpec((int) $definition['field_id']);
+
         try {
             $json_obj = $this->addValueToJsonIfDeprecated(
                 $value,
                 $without_deprecated,
-                $this->container->settings()->getJSON((int) $definition['field_id'])
+                $this->container->settings()->getJSON((int) $definition['field_id']),
+                $coldef
             );
 
             $cascading_select->setCascadingOptions($json_obj);
@@ -210,7 +213,6 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
             $definition['required'] = false;
         }
 
-        $coldef = $this->container->settings()->getColSpec((int) $definition['field_id']);
         $cascading_select->setColumnDefinition($coldef);
         $cascading_select->setValue($value);
         $cascading_select->setRequired($definition['required'] ? true : false);
@@ -278,12 +280,22 @@ class ilCascadingSelectPlugin extends ilUDFDefinitionPlugin
     protected function addValueToJsonIfDeprecated(
         ?string $value,
         CascadingOptions $json_clean,
-        ?CascadingOptions $json_deprecated
+        ?CascadingOptions $json_deprecated,
+        ColumnsDefinition $col_def
     ): CascadingOptions {
         $json_clean = $json_clean->raw();
         $json_deprecated = $json_deprecated->raw();
 
-        $single_values = explode(" → ", (string) $value);
+        $single_values_raw = explode(" → ", (string) $value);
+        $single_values = [];
+
+        $defaults = $col_def->defaults();
+        foreach ($single_values_raw as $single) {
+            if ($single !== $defaults->current()) {
+                $single_values[] = $single;
+            }
+            $defaults->next();
+        }
         if (!count($single_values)) {
             return $this->container->factory()->cascadingOptions($json_clean);
         }
