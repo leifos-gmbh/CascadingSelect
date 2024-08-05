@@ -120,7 +120,7 @@ class ilCascadingSelectInputGUI extends ilSubEnabledFormPropertyGUI
         foreach ($values as $value) {
             $default_option = $defaults->current();
             $defaults->next();
-            if ($default_option === trim($value)) {
+            if ($default_option !== '' && $default_option === trim($value)) {
                 $confirmed_values[] = trim($value);
                 continue;
             }
