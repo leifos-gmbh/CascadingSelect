@@ -24,12 +24,13 @@ $(document).ready(function () {
 
     curroptions[level] = 0;
 
-    if(typeof subOptions.options !== 'undefined' && subOptions.options.length === 0 && typeof columnDef[level] !== 'undefined') {
+    if(typeof subOptions !== 'undefined' && subOptions.length === 0 && typeof columnDef[level] !== 'undefined') {
       var defaultValue = {'name' : noopt}
-      subOptions.options.push(defaultValue);
+      curroptions[level] = -1;
+      subOptions.push(defaultValue);
     }
 
-    $.each(subOptions.options, function (i, option) {
+    $.each(subOptions, function (i, option) {
       var selectOption = new Option(option.name,option.name);
       $('#' + id + '_' + level).append(selectOption);
       var opt = option.name.trim();
@@ -37,7 +38,7 @@ $(document).ready(function () {
       if(curr === opt.split(innerSeparator)[0] || option.name.trim() === noopt) {
         selectOption.selected = true;
         if (level+1 < levels) {
-          setOptionsForSelection(input, option, level + 1);
+          setOptionsForSelection(input, option.options, level + 1);
         }
       }
     });
@@ -62,7 +63,7 @@ $(document).ready(function () {
       if(selectedText.length > 0) {
         hidden[i] = selectedText.trim();
       }
-      if (curroptions[i] == 0) {
+      if (curroptions[i] <= 0) {
         hidden[i] = columnDef[i]['default'];
       }
     }
