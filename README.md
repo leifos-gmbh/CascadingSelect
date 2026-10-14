@@ -23,4 +23,5 @@ German, English
 
 ### Quick Installation Guide
 
-Clone this repository into `components\Leifos` of your ILIAS installation, then update your ILIAS via `cli\setup.php update`.
+Clone this repository into `components\Leifos` of your ILIAS installation, then update your ILIAS via
+`composer install` and then `cli\setup.php update`.
