@@ -63,7 +63,7 @@ $(document).ready(function () {
       if(selectedText.length > 0) {
         hidden[i] = selectedText.trim();
       }
-      if (curroptions[i] <= 0) {
+      if (curroptions[i] <= 0 && columnDef.length > i) {
         hidden[i] = columnDef[i]['default'];
       }
     }
