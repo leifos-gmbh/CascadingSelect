@@ -21,7 +21,7 @@ use DateTimeImmutable;
 class FieldInputGUI extends ilSubEnabledFormPropertyGUI
 {
     public const string SEPARATOR = ' → ';
-    public const string INNER_SEPARATOR = '  ↕  ';
+    public const string INNER_SEPARATOR = ' ↕ ';
 
     private ?string $value = null;
 
